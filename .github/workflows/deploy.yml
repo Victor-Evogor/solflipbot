@@ -96,4 +96,5 @@ jobs:
             
             # Check service status
             sudo systemctl status solana-trader-bot
+            
           EOF
