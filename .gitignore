@@ -1,0 +1,193 @@
+# --- Python ---
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+# Usually pyinstaller outputs are temporary builds, distribution files are in `dist` folder
+*.spec
+
+
+# --- Virtual Environments ---
+
+# Virtualenv
+venv/
+.venv/
+ENV/
+env/
+virtualenv/
+include/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Poetry virtual environments located in the project directory
+.venv
+
+# Anaconda/Conda environments
+.conda
+conda-env.*.yml # Example: conda-env.linux-64.yml
+
+# Tox testing tool
+.tox/
+
+# Nox testing tool
+.nox/
+
+
+# --- Development Tools & IDEs ---
+
+# PyCharm files
+.idea/
+*.iml
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+
+# Spyder IDE
+.spyderproject
+.spyproject
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# PyBuilder
+target/
+
+# Vim swap files
+*.swp
+*.swo
+
+# Eclipse
+.project
+.pydevproject
+.settings/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Emacs
+*~
+#*#
+
+
+# --- Testing & Coverage ---
+
+# pytest cache
+.pytest_cache/
+
+# Coverage reports
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+nosetests.xml
+pytestdebug.log
+
+# Profiling data
+*.prof
+*.lprof
+*.cprof
+
+# Hypothesis database
+.hypothesis/
+
+
+# --- Databases ---
+
+# Local SQLite databases (use with caution, you might want to track a specific dev DB)
+*.sqlite3
+*.db
+db.sqlite3
+
+
+# --- Framework Specific ---
+
+# Django
+*.log
+local_settings.py  # Often used for local-only settings overrides
+
+# Flask instance folder (often contains secrets, config, databases)
+instance/
+.webassets-cache
+
+# Celery
+celerybeat-schedule
+
+
+# --- OS Generated Files ---
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+
+# --- Secrets & Credentials ---
+# NEVER commit secrets to Git!
+# Use environment variables or secret management tools.
+# Ignoring common patterns is a safety net, not a replacement for good practice.
+*.env
+.env.*
+secrets.*
+credentials.*
+*.key
+*.pem
+config.local.*
+
+
+# --- Logs ---
+logs/
+*.log
+
+
+# --- Other ---
+
+# Temporary files
+*.tmp
+*.bak
+
+# MyPy cache
+.mypy_cache/
+
+# Ruff cache
+.ruff_cache/
+repomix-output*

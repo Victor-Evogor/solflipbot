@@ -1,0 +1,6 @@
+buy - Buy a specific meme coin using your demo SOL balance.
+sell - Sell a specified percentage of a meme coin you hold for demo SOL.
+list - List available meme coins for paper trading.
+airdrop - Claim a free airdrop of demo USDT to your wallet.
+lock - Convert a specified amount of demo SOL into demo USDT for stability.
+unlock - Convert a specified amount of demo USDT back into demo SOL for trading.
