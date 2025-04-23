@@ -1,0 +1,89 @@
+name: Deploy to Linode
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Create deployment package
+        run: |
+          mkdir -p deployment
+          cp -r dist package.json package-lock.json deployment/
+          cd deployment && tar -czf ../deployment.tar.gz .
+      
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
+      
+      - name: Add Linode to known hosts
+        run: ssh-keyscan -H ${{ secrets.LINODE_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Deploy to Linode
+        run: |
+          scp deployment.tar.gz ${{ secrets.LINODE_USER }}@${{ secrets.LINODE_HOST }}:~/
+          ssh ${{ secrets.LINODE_USER }}@${{ secrets.LINODE_HOST }} << 'EOF'
+            # Create app directory if it doesn't exist
+            mkdir -p ~/app
+            
+            # Clean existing files and extract new deployment
+            rm -rf ~/app/*
+            tar -xzf ~/deployment.tar.gz -C ~/app
+            rm ~/deployment.tar.gz
+            
+            # Install dependencies on server if needed
+            cd ~/app
+            npm ci --only=production
+            
+            # Create systemd service file
+            cat > ~/my-app.service << 'EOL'
+            [Unit]
+            Description=My Node.js Application
+            After=network.target
+            
+            [Service]
+            Type=simple
+            User=${{ secrets.LINODE_USER }}
+            WorkingDirectory=/home/${{ secrets.LINODE_USER }}/app
+            ExecStart=/usr/bin/node /home/${{ secrets.LINODE_USER }}/app/dist/index.js
+            Restart=on-failure
+            RestartSec=10
+            StandardOutput=syslog
+            StandardError=syslog
+            SyslogIdentifier=my-node-app
+            Environment=NODE_ENV=production
+            
+            [Install]
+            WantedBy=multi-user.target
+            EOL
+            
+            # Move service file to systemd directory and set proper permissions
+            sudo mv ~/my-app.service /etc/systemd/system/
+            sudo systemctl daemon-reload
+            sudo systemctl enable my-app
+            sudo systemctl restart my-app
+            
+            # Check service status
+            sudo systemctl status my-app
+          EOF
