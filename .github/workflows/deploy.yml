@@ -53,7 +53,7 @@ jobs:
             
             # Install dependencies on server
             cd ~/solana-trader-bot
-            python -m pip install --user -r requirements.txt
+            python3 -m pip install --user -r requirements.txt
             
             # Create .env file if it doesn't exist
             if [ ! -f ~/solana-trader-bot/.env ]; then
