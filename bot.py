@@ -9,6 +9,7 @@ from models import User, Trading, Coin
 import requests
 from utils.is_mint_address import is_mint_address
 from utils.get_price_and_symbol import get_price_and_symbol
+from utils.convert_sol import convert_sol_to_usdc
 
 # Load environment variables
 load_dotenv()
@@ -150,7 +151,7 @@ def buy_coin(message):
                 "Please enter in a numerical value for the amount of tokens"
             )
             return 
-        usdc_amount = get_price_and_symbol("So11111111111111111111111111111111111111112")[0] * amount
+        usdc_amount = convert_sol_to_usdc(amount)
         
     elif amount_str.lower().endswith("usdc") and len(amount_str) > 4:
         try:
@@ -214,7 +215,7 @@ def sell_coin(message):
                 "Please enter in a numerical value for the amount of tokens"
             )
             return 
-        usdc_amount = get_price_and_symbol("So11111111111111111111111111111111111111112")[0] * amount
+        usdc_amount = convert_sol_to_usdc(amount)
         
     elif amount_str.lower().endswith("usdc") and len(amount_str) > 4:
         try:
