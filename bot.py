@@ -131,6 +131,7 @@ def buy_coin(message):
         )
         return
     address = args[1]
+    usdc_amount = None
     if not is_mint_address(args[1]):
         user = User.get_by_telegram_id(user_id)
         address = [coin.address for coin in user.coins if coin.symbol == args[1]][0]
@@ -163,6 +164,14 @@ def buy_coin(message):
             )
             return 
         usdc_amount = amount
+        
+    if usdc_amount is None:
+        bot.send_message(
+            message.chat.id,
+            "Unexpected error parsing amount. Please check your input."
+        )
+        return
+
     else:
         bot.send_message(
             message.chat.id,
@@ -466,8 +475,6 @@ from datetime import timedelta
 def main():
     """Main function to start the bot"""
     logger.info("Starting Solana Meme Trader Bot...")
-    
-    
     # Start the bot
     bot.polling(none_stop=True)
 
