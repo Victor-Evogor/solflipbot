@@ -166,7 +166,7 @@ def buy_coin(message):
     else:
         bot.send_message(
             message.chat.id,
-            "Please specify the amount in either `SOL` or `usdc`.\nExample: `/buy 38AzpaUx... 0.5SOL`",
+            f"Please specify the amount in either `SOL` or `usdc`.\nExample: `/buy {address} {amount_str}SOL or /buy {address} {amount_str}USDC`",
             parse_mode="Markdown"
         )
         return
