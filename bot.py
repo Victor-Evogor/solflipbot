@@ -393,20 +393,20 @@ def show_pnl(message):
     args = message.text.split()[1:]
     
     if len(args) == 0:
-        response = f"Your current PnL is {total_pnl}%"
+        response = f"Your current PnL is {total_pnl:.2f}%"
     elif args[0].lower() == "all":
-        response = f"*Total PNL*: {total_pnl}%\n\n"
+        response = f"*Total PNL*: {total_pnl:.2f}%\n\n"
         response += "*Other PnL*: \n"
         for coin in user.coins:
-            response += f"*{coin.symbol}*: {coin.pnl}%\n"
+            response += f"*{coin.symbol}*: {coin.pnl:.2f}%\n"
         
     else:
-        response = f"*Total PNL*: {total_pnl}%\n\n"
+        response = f"*Total PNL*: {total_pnl:.2f}%\n\n"
         response += "*Other PnL*: \n"
         for symbol in args:
             selected_coins = [coin for coin in user.coins if coin.symbol == symbol]
         for coin in selected_coins:
-            response += f"*{coin.symbol}*: {coin.pnl}%\n"
+            response += f"*{coin.symbol}*: {coin.pnl:.2f}%\n"
     
     bot.send_message(message.chat.id, response, parse_mode="Markdown")
 

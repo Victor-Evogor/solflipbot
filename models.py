@@ -208,7 +208,7 @@ class Trading:
         if coin:
             selling_price = coin.amount * (percentage / 100) * coin.price
             coin.txns.append(Txn(type="SELL", amount=coin.amount * (percentage / 100), priceUsd=token_price))
-            user.sol_balance -= convert_usdc_to_sol(selling_price)
+            user.sol_balance += convert_usdc_to_sol(selling_price)
             user.save()
             return True, f"Sold {percentage}% of {coin.symbol} at {token_price:.4f}USDC 💸"
         else:
