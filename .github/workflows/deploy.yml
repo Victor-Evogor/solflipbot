@@ -24,7 +24,11 @@ jobs:
         run: |
           mkdir -p deployment # Create a deployment directory
           # Copy necessary files and directories into the deployment folder
-          cp -r *.py utils tests requirements.txt deployment/
+          # Ensure utils and tests directories exist or handle potential errors
+          cp -r *.py requirements.txt deployment/
+          # Only copy directories if they exist
+          [ -d "utils" ] && cp -r utils deployment/
+          [ -d "tests" ] && cp -r tests deployment/
           # Change into the deployment directory and create a compressed tar archive
           cd deployment && tar -czf ../bot-deployment.tar.gz .
 
@@ -49,7 +53,7 @@ jobs:
           LINODE_HOST: ${{ secrets.LINODE_HOST }}
           TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }} # Pass Telegram key as env var
           MONGODB_URI: ${{ secrets.MONGODB_URI }}       # Pass MongoDB URI as env var
-        run: |
+        run: | # Start multiline script
           # Copy the deployment package to the Linode server
           scp bot-deployment.tar.gz ${LINODE_USER}@${LINODE_HOST}:~/
 
@@ -72,6 +76,8 @@ jobs:
             if [ ! -d ~/solana-trader-bot/venv ]; then
               echo "Setting up Python virtual environment..."
               # Update package list and install Python venv package
+              # Use non-interactive frontend to avoid prompts
+              export DEBIAN_FRONTEND=noninteractive
               sudo apt-get update
               sudo apt-get install -y python3-venv python3-full
               # Create the virtual environment
@@ -87,14 +93,18 @@ jobs:
             # Note: Secrets are passed via env vars set in the 'env:' block above
             echo "Creating/Updating .env file..."
             ENV_FILE_PATH=~/solana-trader-bot/.env
-            # Ensure TELEGRAM_API_KEY line exists or add it
+            # Create the file if it doesn't exist
+            touch "$ENV_FILE_PATH"
+            # Ensure TELEGRAM_API_KEY line exists or add/update it
             if grep -q "^TELEGRAM_API_KEY=" "$ENV_FILE_PATH"; then
+              # Use a different delimiter for sed in case the key contains slashes
               sed -i "s|^TELEGRAM_API_KEY=.*|TELEGRAM_API_KEY=${TELEGRAM_API_KEY}|g" "$ENV_FILE_PATH"
             else
               echo "TELEGRAM_API_KEY=${TELEGRAM_API_KEY}" >> "$ENV_FILE_PATH"
             fi
-            # Ensure MONGODB_URI line exists or add it
+            # Ensure MONGODB_URI line exists or add/update it
             if grep -q "^MONGODB_URI=" "$ENV_FILE_PATH"; then
+              # Use a different delimiter for sed in case the URI contains slashes
               sed -i "s|^MONGODB_URI=.*|MONGODB_URI=${MONGODB_URI}|g" "$ENV_FILE_PATH"
             else
               echo "MONGODB_URI=${MONGODB_URI}" >> "$ENV_FILE_PATH"
@@ -103,18 +113,21 @@ jobs:
 
             # Create the systemd service file for the bot
             echo "Creating systemd service file..."
-            cat > ~/solana-trader-bot.service << SERVICEFILE
+            # Use the USER variable available in the SSH session
+            CURRENT_USER=$(whoami)
+            SERVICE_FILE_PATH="/etc/systemd/system/solana-trader-bot.service"
+            # Use sudo tee to write the service file directly to the system location
+            sudo tee "$SERVICE_FILE_PATH" > /dev/null << SERVICEFILE
 [Unit]
 Description=Solana Trader Telegram Bot
 After=network.target
 
 [Service]
 Type=simple
-# Use the dynamic user variable from the SSH session
-User=${USER}
-WorkingDirectory=/home/${USER}/solana-trader-bot
+User=${CURRENT_USER}
+WorkingDirectory=/home/${CURRENT_USER}/solana-trader-bot
 # Execute the bot using the python interpreter from the virtual environment
-ExecStart=/home/${USER}/solana-trader-bot/venv/bin/python /home/${USER}/solana-trader-bot/bot.py
+ExecStart=/home/${CURRENT_USER}/solana-trader-bot/venv/bin/python /home/${CURRENT_USER}/solana-trader-bot/bot.py
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
@@ -124,17 +137,23 @@ Environment="PYTHONUNBUFFERED=1" # Ensure Python output is not buffered
 [Install]
 WantedBy=multi-user.target
 SERVICEFILE
-            echo "Systemd service file created."
+            echo "Systemd service file created at ${SERVICE_FILE_PATH}."
 
-            # Move the service file to the systemd directory (requires sudo)
-            echo "Moving service file and managing service..."
-            sudo mv ~/solana-trader-bot.service /etc/systemd/system/
-            # Reload systemd to recognize the new service file
+            # Move the service file to the systemd directory (requires sudo) - No longer needed, written directly
+            # echo "Moving service file and managing service..."
+            # sudo mv ~/solana-trader-bot.service /etc/systemd/system/
+
+            # Reload systemd to recognize the new/changed service file
+            echo "Reloading systemd daemon..."
             sudo systemctl daemon-reload
             # Enable the service to start on boot
+            echo "Enabling service..."
             sudo systemctl enable solana-trader-bot
             # Restart the service to apply changes and start the bot
+            echo "Restarting service..."
             sudo systemctl restart solana-trader-bot
             # Check the status of the service
+            echo "Checking service status..."
             sudo systemctl status solana-trader-bot --no-pager # --no-pager prevents interactive mode
-          ENDSSH # End of the SSH heredoc
+            echo "Deployment script finished."
+          ENDSSH # End of the SSH heredoc - This line MUST start at column 0 relative to the script block
