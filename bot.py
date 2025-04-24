@@ -144,7 +144,7 @@ def buy_coin(message):
     amount_str: str = args[2]
     if amount_str.lower().endswith("sol") and len(amount_str) > 3:
         try:
-            amount= float(amount_str.lower().split("sol")[0])
+            amount = float(amount_str.lower().replace("sol", ""))
         except ValueError:
             bot.send_message(
                 message.chat.id,
@@ -155,7 +155,7 @@ def buy_coin(message):
         
     elif amount_str.lower().endswith("usdc") and len(amount_str) > 4:
         try:
-            amount= float(amount_str.split("usdc")[0])
+            amount = float(amount_str.lower().replace("usdc", ""))
         except ValueError:
             bot.send_message(
                 message.chat.id,
