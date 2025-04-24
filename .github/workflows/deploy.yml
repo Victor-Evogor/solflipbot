@@ -1,68 +1,108 @@
+# Workflow name
 name: Deploy Bot to Linode
 
+# Triggers for the workflow
 on:
   push:
-    branches: [ master ]
-  workflow_dispatch:  # Allows manual triggering
+    branches: [ master ] # Trigger on push to master branch
+  workflow_dispatch: {} # Allows manual triggering from the Actions tab
 
+# Jobs to run in the workflow
 jobs:
   deploy:
+    # Runner environment
     runs-on: ubuntu-latest
-    
+
+    # Steps to execute in the deploy job
     steps:
+      # Step 1: Check out the repository code
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
+      # Step 2: Create a deployment package (tarball)
       - name: Create deployment package
         run: |
-          mkdir -p deployment
+          mkdir -p deployment # Create a deployment directory
+          # Copy necessary files and directories into the deployment folder
           cp -r *.py utils tests requirements.txt deployment/
+          # Change into the deployment directory and create a compressed tar archive
           cd deployment && tar -czf ../bot-deployment.tar.gz .
-      
+
+      # Step 3: Install the SSH private key for authentication
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }} # Use the private key stored in GitHub secrets
+          # Add a placeholder for known_hosts to avoid initial connection errors
+          # The actual host key will be added in the next step
           known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
-      
+
+      # Step 4: Add the Linode server's SSH host key to known_hosts
       - name: Add Linode to known hosts
         run: ssh-keyscan -H ${{ secrets.LINODE_HOST }} >> ~/.ssh/known_hosts
-      
-        - name: Deploy to Linode
+
+      # Step 5: Deploy the application to the Linode server
+      - name: Deploy to Linode
+        # Use environment variables for secrets within the script
+        env:
+          LINODE_USER: ${{ secrets.LINODE_USER }}
+          LINODE_HOST: ${{ secrets.LINODE_HOST }}
+          TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }} # Pass Telegram key as env var
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}       # Pass MongoDB URI as env var
         run: |
-          scp bot-deployment.tar.gz ${{ secrets.LINODE_USER }}@${{ secrets.LINODE_HOST }}:~/
-          ssh ${{ secrets.LINODE_USER }}@${{ secrets.LINODE_HOST }} << 'ENDSSH'
-            # Create app directory if it doesn't exist
+          # Copy the deployment package to the Linode server
+          scp bot-deployment.tar.gz ${LINODE_USER}@${LINODE_HOST}:~/
+
+          # Connect to Linode via SSH and execute deployment commands
+          ssh ${LINODE_USER}@${LINODE_HOST} << 'ENDSSH'
+            # Ensure the target application directory exists
             mkdir -p ~/solana-trader-bot
-            
-            # Clean existing files and extract new deployment
+
+            # Remove old application files before extracting the new version
+            echo "Cleaning up old deployment..."
             rm -rf ~/solana-trader-bot/*
+
+            # Extract the new deployment package into the application directory
+            echo "Extracting new deployment..."
             tar -xzf ~/bot-deployment.tar.gz -C ~/solana-trader-bot
+            # Remove the deployment package from the home directory
             rm ~/bot-deployment.tar.gz
 
-            # Set up virtual environment
+            # Set up Python virtual environment if it doesn't exist
             if [ ! -d ~/solana-trader-bot/venv ]; then
+              echo "Setting up Python virtual environment..."
+              # Update package list and install Python venv package
               sudo apt-get update
               sudo apt-get install -y python3-venv python3-full
+              # Create the virtual environment
               python3 -m venv ~/solana-trader-bot/venv
             fi
-            
-            # Install dependencies in virtual environment
+
+            # Install/upgrade dependencies using pip within the virtual environment
+            echo "Installing dependencies..."
             ~/solana-trader-bot/venv/bin/pip install --upgrade pip
             ~/solana-trader-bot/venv/bin/pip install -r ~/solana-trader-bot/requirements.txt
-            
-            # Create .env file if it doesn't exist
-            if [ ! -f ~/solana-trader-bot/.env ]; then
-              cat > ~/solana-trader-bot/.env << ENVFILE
-TELEGRAM_API_KEY=\${TELEGRAM_API_KEY}
-MONGODB_URI=\${MONGODB_URI}
-ENVFILE
-            else
-              sed -i "s|^TELEGRAM_API_KEY=.*|TELEGRAM_API_KEY=\${TELEGRAM_API_KEY}|g" ~/solana-trader-bot/.env
-              sed -i "s|^MONGODB_URI=.*|MONGODB_URI=\${MONGODB_URI}|g" ~/solana-trader-bot/.env
-            fi
 
-            # Create systemd service file
+            # Create or update the .env file with secrets from environment variables
+            # Note: Secrets are passed via env vars set in the 'env:' block above
+            echo "Creating/Updating .env file..."
+            ENV_FILE_PATH=~/solana-trader-bot/.env
+            # Ensure TELEGRAM_API_KEY line exists or add it
+            if grep -q "^TELEGRAM_API_KEY=" "$ENV_FILE_PATH"; then
+              sed -i "s|^TELEGRAM_API_KEY=.*|TELEGRAM_API_KEY=${TELEGRAM_API_KEY}|g" "$ENV_FILE_PATH"
+            else
+              echo "TELEGRAM_API_KEY=${TELEGRAM_API_KEY}" >> "$ENV_FILE_PATH"
+            fi
+            # Ensure MONGODB_URI line exists or add it
+            if grep -q "^MONGODB_URI=" "$ENV_FILE_PATH"; then
+              sed -i "s|^MONGODB_URI=.*|MONGODB_URI=${MONGODB_URI}|g" "$ENV_FILE_PATH"
+            else
+              echo "MONGODB_URI=${MONGODB_URI}" >> "$ENV_FILE_PATH"
+            fi
+            echo ".env file configured."
+
+            # Create the systemd service file for the bot
+            echo "Creating systemd service file..."
             cat > ~/solana-trader-bot.service << SERVICEFILE
 [Unit]
 Description=Solana Trader Telegram Bot
@@ -70,22 +110,31 @@ After=network.target
 
 [Service]
 Type=simple
-User=\${USER}
-WorkingDirectory=/home/\${USER}/solana-trader-bot
-ExecStart=/home/\${USER}/solana-trader-bot/venv/bin/python /home/\${USER}/solana-trader-bot/bot.py
+# Use the dynamic user variable from the SSH session
+User=${USER}
+WorkingDirectory=/home/${USER}/solana-trader-bot
+# Execute the bot using the python interpreter from the virtual environment
+ExecStart=/home/${USER}/solana-trader-bot/venv/bin/python /home/${USER}/solana-trader-bot/bot.py
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
-Environment="PYTHONUNBUFFERED=1"
+Environment="PYTHONUNBUFFERED=1" # Ensure Python output is not buffered
 
 [Install]
 WantedBy=multi-user.target
 SERVICEFILE
+            echo "Systemd service file created."
 
+            # Move the service file to the systemd directory (requires sudo)
+            echo "Moving service file and managing service..."
             sudo mv ~/solana-trader-bot.service /etc/systemd/system/
+            # Reload systemd to recognize the new service file
             sudo systemctl daemon-reload
+            # Enable the service to start on boot
             sudo systemctl enable solana-trader-bot
+            # Restart the service to apply changes and start the bot
             sudo systemctl restart solana-trader-bot
-            sudo systemctl status solana-trader-bot
-ENDSSH
+            # Check the status of the service
+            sudo systemctl status solana-trader-bot --no-pager # --no-pager prevents interactive mode
+          ENDSSH # End of the SSH heredoc
