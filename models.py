@@ -194,7 +194,7 @@ class Trading:
             user.coins.append(Coin(address=address, symbol=symbol, txns=[Txn(type="BUY", amount=amount, priceUsd=token_price)]))
         user.sol_balance -= sol_amount
         user.save()
-        return f"Bought {amount}{symbol} for {usdc_amount}USDC 💸", None
+        return f"Bought {amount}{symbol} for {usdc_amount}USDC 💸\n{sol_amount:.4f}SOL deducted!", None
         
     
     @staticmethod
