@@ -42,7 +42,7 @@ jobs:
       - name: Deploy to Linode
         run: |
           scp bot-deployment.tar.gz ${{ secrets.LINODE_USER }}@${{ secrets.LINODE_HOST }}:~/
-          ssh ${{ secrets.LINODE_USER }}@${{ secrets.LINODE_HOST }} << 'EOF'
+          ssh ${{ secrets.LINODE_USER }}@${{ secrets.LINODE_HOST }} << EOF
             # Create app directory if it doesn't exist
             mkdir -p ~/solana-trader-bot
             
