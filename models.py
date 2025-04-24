@@ -194,7 +194,16 @@ class Trading:
             user.coins.append(Coin(address=address, symbol=symbol, txns=[Txn(type="BUY", amount=amount, priceUsd=token_price)]))
         user.sol_balance -= sol_amount
         user.save()
-        return f"Bought {amount}{symbol} for {usdc_amount}USDC 💸\n{sol_amount:.4f}SOL deducted!", None
+        return f"""🎉 Transaction Complete! 🎉
+
+You bought {amount} {symbol} for {usdc_amount} USDC 💸
+({sol_amount:.4f} SOL deducted)
+
+💰 Updated Balance:
+   • SOL: {user.sol_balance:.4f} 🪙
+   • USDC: {user.usdc_balance:.2f} 💵
+
+Good luck with your trade! 🤞""", None
         
     
     @staticmethod
@@ -208,9 +217,19 @@ class Trading:
         if coin:
             selling_price = coin.amount * (percentage / 100) * coin.price
             coin.txns.append(Txn(type="SELL", amount=coin.amount * (percentage / 100), priceUsd=token_price))
-            user.sol_balance += convert_usdc_to_sol(selling_price)
+            sol_added = convert_usdc_to_sol(selling_price)
+            user.sol_balance += sol_added
             user.save()
-            return True, f"Sold {percentage}% of {coin.symbol} at {token_price:.4f}USDC\n*Total Revenue*: {selling_price} 💸"
+            return True, f"""🎉 Transaction Complete! 🎉
+
+You sold {percentage}% of {coin.symbol} for {selling_price} USDC 💸
+({sol_added:.4f} SOL added)
+
+💰 Updated Balance:
+   • SOL: {user.sol_balance:.4f} 🪙
+   • USDC: {user.usdc_balance:.2f} 💵
+
+Good luck with your trade! 🤞"""
         else:
             raise f"No coin found for address {address}"
     

@@ -24,6 +24,14 @@ logger = logging.getLogger(__name__)
 # Initialize bot
 bot = telebot.TeleBot(os.getenv('TELEGRAM_API_KEY'))
 
+trading_tips = [
+    "💡 Tip: Consider diversifying your portfolio to manage risk.",
+    "💡 Tip: Never invest more than you can afford to lose - even in paper trading!",
+    "💡 Tip: Check /pnl regularly to evaluate your trading strategy.",
+    "💡 Tip: Use /lock to safeguard profits during volatile periods.",
+    "💡 Tip: Research tokens before buying, even in simulator trading."
+]
+
 # Command handlers
 @bot.message_handler(commands=['start'])
 def start_command(message):
@@ -38,23 +46,23 @@ def start_command(message):
     user.save()
     
     welcome_text = (
-        f"🚀 Welcome to Solana Meme Trader, {first_name}! 🚀\n\n"
-        "This is your playground to practice meme coin trading on Solana - no real money, no real risks!\n\n"
-        "🔹 You start with 5 SOL and 100 USDC (demo tokens)\n"
-        "🔹 Buy/sell meme coins and track your performance\n"
-        "🔹 Practice your trading without losing real SOL\n\n"
-        "Commands:\n"
-        "/buy - Buy a specific meme coin using your demo SOL\n"
-        "/sell - Sell a percentage of a meme coin you hold\n"
-        "/list - See available meme coins for trading\n"
-        "/airdrop - Claim a free usdc airdrop (once every 24h)\n"
-        "/lock - Convert SOL to usdc for stability\n"
-        "/unlock - Convert usdc back to SOL for trading\n"
-        "/portfolio - View your current holdings\n"
-        "/balance - Check your wallet balance\n"
-        "/pnl - See your profit/loss statistics\n"
-        "/transactions - View your recent transactions\n\n"
-        "Join our telegram group for updates and support: https://t.me/solanasimtraders\n\n"
+        f"""🚀 Welcome to Solana Meme Trader, {first_name}! 🚀
+
+🌙 Ready to practice moon-shooting without risking real SOL? You're in the right place!
+
+💰 Starting Balance:
+   • 5 SOL 🪙
+   • 100 USDC 💵
+
+🎮 Quick Commands:
+   • /buy - Grab some meme coins 🛒
+   • /sell - Take profits (or losses) 📈
+   • /list - Browse available tokens 📋
+   • /portfolio - Check your holdings 💼
+
+💎 Join our community: https://t.me/solanasimtraders
+
+Type /help for all commands and tips!"""
         
     )
     
@@ -140,6 +148,14 @@ def buy_coin(message):
     # Determine if it's a wallet address or a token symbol
     if is_mint_address(address_or_symbol):
         address = address_or_symbol
+        try:
+            symbol = get_price_and_symbol(address_or_symbol)[1]
+        except Exception:
+            bot.send_message(
+                message.chat.id,
+                "Invalid address. Please provide a valid wallet address or a tracked token symbol."
+            )
+            return
     else:
         user = User.get_by_telegram_id(user_id)
         token = next((coin for coin in user.coins if coin.symbol.lower() == address_or_symbol.lower()), None)
@@ -150,6 +166,7 @@ def buy_coin(message):
             )
             return
         address = token.address
+        symbol = address_or_symbol.upper()
 
     # Parse amount
     if amount_str.lower().endswith("sol") and len(amount_str) > 3:
@@ -195,6 +212,19 @@ def buy_coin(message):
         f"Your balances:\n"
         f"SOL: {user.sol_balance:.4f}\n"
         f"USDC: {user.usdc_balance:.2f}"
+    )
+    
+    # After successful purchase, add this:
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(
+        telebot.types.InlineKeyboardButton("View Portfolio", callback_data="view_portfolio"),
+        telebot.types.InlineKeyboardButton("Buy More", callback_data=f"buy_more_{symbol}")
+    )
+    
+    bot.send_message(
+        message.chat.id,
+        f"Want to see your updated portfolio or buy more {symbol}?",
+        reply_markup=markup
     )
 
 @bot.message_handler(commands=['sell'])
@@ -364,7 +394,7 @@ def unlock_usdc(message):
             f"SOL: {user.sol_balance:.4f}\n"
             f"usdc: {user.usdc_balance:.2f}"
         )
-    
+    bot.send_message(message.chat.id, random.choice(trading_tips))
 
 @bot.message_handler(commands=['balance'])
 def show_balance(message):
@@ -391,6 +421,18 @@ def show_balance(message):
     response = "\n".join(response_lines)
     
     bot.send_message(message.chat.id, response, parse_mode="Markdown")
+    
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(
+        telebot.types.InlineKeyboardButton("Buy Tokens", callback_data="show_buy_options"),
+        telebot.types.InlineKeyboardButton("Lock SOL", callback_data="lock_sol")
+    )
+    
+    bot.send_message(
+        message.chat.id,
+        "What would you like to do next?",
+        reply_markup=markup
+    )
 
 
 @bot.message_handler(commands=['pnl'])
@@ -420,38 +462,57 @@ def show_pnl(message):
             response += f"*{coin.symbol}*: {coin.pnl:.5f}%\n"
     
     bot.send_message(message.chat.id, response, parse_mode="Markdown")
+    bot.send_message(message.chat.id, random.choice(trading_tips))
 
 
 @bot.message_handler(commands=['help'])
 def help_command(message):
-    """Show help message with available commands"""
+    """Show detailed help message with available commands"""
     user_id = message.from_user.id
     User.update_last_active(telegram_id=user_id)
     
     help_text = (
-        "🤖 *Solana Meme Trader Commands* 🤖\n\n"
-        "*Trading Commands:*\n"
-        "/buy [SYMBOL] [SOL_AMOUNT] - Buy a meme coin\n"
-        "/sell [SYMBOL] [PERCENTAGE] - Sell a percentage of your holdings\n"
-        "/list - See available meme coins\n\n"
-        
-        "*Wallet Commands:*\n"
-        "/airdrop - Claim free usdc (once every 24h)\n"
-        "/lock [SOL_AMOUNT] - Convert SOL to usdc\n"
-        "/unlock [usdc_AMOUNT] - Convert usdc to SOL\n\n"
-        
-        "*Info Commands:*\n"
-        "/portfolio - View your coin holdings\n"
-        "/balance - Check wallet balances\n"
-        "/pnl - See profit/loss statistics\n\n"
-        
-        "*Other Commands:*\n"
-        "/start - Restart the bot\n"
-        "/help - Show this help message\n\n"
-        
-        "📈 Good luck with your paper trading! 📈"
-    )
+    "🚀 *SOLANA MEME TRADER BOT* 🚀\n\n"
+    "Welcome to your paper trading playground! Here's how to use the bot:\n\n"
     
+    "📊 *TRADING COMMANDS* 📊\n"
+    "/buy [SYMBOL/ADDRESS] [AMOUNT+CURRENCY] - Buy tokens\n"
+    "  Examples: `/buy BONK 10USDC` or `/buy BONK 0.5SOL`\n\n"
+    
+    "/sell [SYMBOL/ADDRESS] [PERCENTAGE] - Sell your holdings\n"
+    "  Example: `/sell BONK 50` (sells 50% of your BONK)\n\n"
+    
+    "/list - View all your trackable tokens\n\n"
+    
+    "/track [ADDRESS] - Add a new token to your watchlist\n"
+    "  Example: `/track 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU`\n\n"
+    
+    "💰 *WALLET COMMANDS* 💰\n"
+    "/airdrop [AMOUNT] - Get free demo USDC\n"
+    "  Example: `/airdrop 50`\n\n"
+    
+    "/lock [AMOUNT] - Convert SOL to stable USDC\n"
+    "  Example: `/lock 1.5`\n\n"
+    
+    "/unlock [AMOUNT] - Convert USDC back to SOL\n"
+    "  Example: `/unlock 25`\n\n"
+    
+    "📈 *PORTFOLIO COMMANDS* 📈\n"
+    "/balance - View your wallet balances\n\n"
+    
+    "/portfolio - See your complete holdings\n\n"
+    
+    "/pnl - Check your profit/loss metrics\n"
+    "  Options: `/pnl all` or `/pnl [SYMBOL]`\n\n"
+    
+    "💡 *PRO TIPS* 💡\n"
+    "• Start with small trades to learn the platform\n"
+    "• Track your favorite tokens with `/track`\n"
+    "• Lock profits in USDC during volatile periods\n"
+    "• Compare strategies by tracking your PnL\n\n"
+    
+    "🤔 Need more help? Join our community: https://t.me/solanasimtraders"
+    )
     bot.send_message(message.chat.id, help_text, parse_mode="Markdown")
 
 # Handle all other messages

@@ -1,6 +1,12 @@
-buy - Buy a specific meme coin using your demo SOL balance.
-sell - Sell a specified percentage of a meme coin you hold for demo SOL.
-list - List available meme coins for paper trading.
-airdrop - Claim a free airdrop of demo USDT to your wallet.
-lock - Convert a specified amount of demo SOL into demo USDT for stability.
-unlock - Convert a specified amount of demo USDT back into demo SOL for trading.
+start - Begin your paper trading journey with demo SOL and USDC
+buy - Buy a specific meme coin using your demo funds (SOL or USDC)
+sell - Sell a percentage of a meme coin you hold for demo SOL
+list - List available meme coins for paper trading
+track - Track a new token by providing its mint address
+airdrop - Claim a free airdrop of demo USDT to your wallet
+lock - Convert a specified amount of demo SOL into demo USDT for stability
+unlock - Convert a specified amount of demo USDT back into demo SOL for trading
+balance - Check your current wallet balances
+portfolio - View your complete trading portfolio and statistics
+pnl - See your profit/loss statistics across all holdings
+help - Get detailed instructions on how to use the bot

@@ -27,12 +27,12 @@ def get_price_and_symbol(address: str) -> Tuple[float, str]:
     data = response.json()
     
     if not data: 
-        return 0.0
+        raise "Error: No data found for the given address"
     
     
     
     if not data[0]:
-        return 0.0
+        raise "Error: No data found for the given address"
     
     price = data[0]["priceUsd"]
     symbol = data[0]["baseToken"]["symbol"]
