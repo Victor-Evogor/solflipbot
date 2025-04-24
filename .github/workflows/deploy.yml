@@ -27,7 +27,7 @@ jobs:
       - name: Create deployment package
         run: |
           mkdir -p deployment
-          cp -r *.py utils tests requirements.txt deployment/
+          cp -r *.py utils requirements.txt deployment/
           cd deployment && tar -czf ../bot-deployment.tar.gz .
       
       - name: Install SSH key
