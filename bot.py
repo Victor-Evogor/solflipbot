@@ -190,7 +190,7 @@ def sell_coin(message):
     if len(args) != 3:
         bot.send_message(
             message.chat.id, 
-            "Please use the format: `/sell [Wallet Address or MINT SYMBOL] [AMOUNT in SOL or usdc]`\nExample: `/sell 38AzpaUxVEGhFjXxJx86xsb5xxWW1c1DKvqHhPXBpump 0.5SOL\n\nUse the either SOL or usdc as selling currency`",
+            "Please use the format: `/sell [Mint Address or MINT SYMBOL] [AMOUNT in SOL or usdc]`\nExample: `/sell 38AzpaUxVEGhFjXxJx86xsb5xxWW1c1DKvqHhPXBpump 100\n\nThis will sell 100% of the currency`",
             parse_mode="Markdown"
         )
         return
@@ -201,33 +201,22 @@ def sell_coin(message):
         if not address:
             bot.send_message(
                 message.chat.id,
-                "Please use a valid wallet address or tracked token(Use the symbol of the token)"
+                "Please use a valid mint address or tracked token(Use the symbol of the token)"
             )
             return 
         
     amount_str: str = args[2]
-    if amount_str.lower().endswith("sol") and len(amount_str) > 3:
-        try:
-            amount= float(amount_str.lower().split("sol")[0])
-        except ValueError:
-            bot.send_message(
-                message.chat.id,
-                "Please enter in a numerical value for the amount of tokens"
-            )
-            return 
-        usdc_amount = convert_sol_to_usdc(amount)
+    
+    try:
+        amount= float(amount_str)
         
-    elif amount_str.lower().endswith("usdc") and len(amount_str) > 4:
-        try:
-            amount= float(amount_str.split("usdc")[0])
-        except ValueError:
-            bot.send_message(
-                message.chat.id,
-                "Please enter in a numerical value for the amount of tokens"
-            )
-            return 
-        usdc_amount = amount
-    outcome = Trading.sell_coin(telegram_id=user_id, address=address, usdc_amount=usdc_amount)
+    except ValueError:
+        bot.send_message(
+            message.chat.id,
+            "Please enter in a numerical value for the amount of tokens"
+        )
+        return 
+    outcome = Trading.sell_coin(telegram_id=user_id, address=address, percentage=amount)
     if outcome[0]:
         bot.send_message(
             message.chat.id,
