@@ -163,6 +163,13 @@ def buy_coin(message):
             )
             return 
         usdc_amount = amount
+    else:
+        bot.send_message(
+            message.chat.id,
+            "Please specify the amount in either `SOL` or `usdc`.\nExample: `/buy 38AzpaUx... 0.5SOL`",
+            parse_mode="Markdown"
+        )
+        return
     outcome = Trading.buy_coin(telegram_id=user_id, address=address, usdc_amount=usdc_amount)
     if outcome[0]:
         bot.send_message(

@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 from typing import List, Literal, Tuple
 from collections import deque
-from utils.convert_sol import convert_usdc_to_sol
+from utils.convert_sol import convert_usdc_to_sol, convert_sol_to_usdc
 
 from utils.get_price_and_symbol import get_price_and_symbol
 
@@ -210,19 +210,18 @@ class Trading:
             coin.txns.append(Txn(type="SELL", amount=coin.amount * (percentage / 100), priceUsd=token_price))
             user.sol_balance += convert_usdc_to_sol(selling_price)
             user.save()
-            return True, f"Sold {percentage}% of {coin.symbol} at {token_price:.4f}USDC 💸"
+            return True, f"Sold {percentage}% of {coin.symbol} at {token_price:.4f}USDC\n*Total Revenue*: {selling_price} 💸"
         else:
             raise f"No coin found for address {address}"
     
     @staticmethod
     def lock_sol(telegram_id, sol_amount):
         """Convert SOL to usdc"""
-        sol_to_usdc_rate = get_price_and_symbol("So11111111111111111111111111111111111111112")[0]
         user = User.get_by_telegram_id(telegram_id=telegram_id)
         if sol_amount > user.sol_balance:
             return False, "Insufficient SOL balance"
         # Calculate usdc amount (1 SOL = 20 usdc in this example)
-        usdc_amount = sol_amount * sol_to_usdc_rate
+        usdc_amount = convert_sol_to_usdc(sol_amount)
         user.sol_balance -= sol_amount
         user.usdc_balance += usdc_amount
         user.save()
@@ -232,11 +231,10 @@ class Trading:
     @staticmethod
     def unlock_usdc(telegram_id, usdc_amount):
         """Convert usdc back to SOL"""
-        sol_to_usdc_rate = get_price_and_symbol("So11111111111111111111111111111111111111112")[0]
         user = User.get_by_telegram_id(telegram_id=telegram_id)
         if usdc_amount > user.usdc_balance:
             return False, "Insufficient usdc balance"
-        sol_amount = usdc_amount / sol_to_usdc_rate
+        sol_amount = convert_usdc_to_sol(usdc_amount)
         user.usdc_balance -= usdc_amount
         user.sol_balance += sol_amount
         user.save()
@@ -257,7 +255,7 @@ class Trading:
         """Calculate total portfolio value in SOL"""
         user = User.get_by_telegram_id(telegram_id=telegram_id)
         value_of_coins = sum([get_price_and_symbol(coin.address)[0] * coin.amount for coin in user.coins])
-        value_of_sol = get_price_and_symbol("So11111111111111111111111111111111111111112")[0] * user.sol_balance
+        value_of_sol = convert_sol_to_usdc(user.sol_balance)
         return user.usdc_balance + value_of_coins + value_of_sol, user.pnl
     
     
