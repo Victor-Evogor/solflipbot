@@ -118,89 +118,84 @@ def track_token(message):
 
 @bot.message_handler(commands=['buy'])
 def buy_coin(message):
-    """Buy a meme coin using SOL"""
+    """Buy a meme coin using SOL or USDC"""
     user_id = message.from_user.id
     User.update_last_active(telegram_id=user_id)
     
-    args = message.text.split()
+    args = message.text.split(" ")
     if len(args) != 3:
         bot.send_message(
             message.chat.id, 
-            "Please use the format: `/buy [Wallet Address] [AMOUNT in SOL or usdc]`\nExample: `/buy 38AzpaUxVEGhFjXxJx86xsb5xxWW1c1DKvqHhPXBpump 0.5SOL\n\nUse the either SOL or usdc as buying currency`",
+            "Please use the format: `/buy [Wallet Address or Token Symbol] [AMOUNT in SOL or USDC]`\n"
+            "Example: `/buy 38AzpaUxVEGhFjXxJx86xsb5xxWW1c1DKvqHhPXBpump 0.5SOL`\n\n"
+            "Use either SOL or USDC as the buying currency.",
             parse_mode="Markdown"
         )
         return
-    address = args[1]
+
+    address_or_symbol = args[1]
+    amount_str = args[2]
     usdc_amount = None
-    if not is_mint_address(args[1]):
+
+    # Determine if it's a wallet address or a token symbol
+    if is_mint_address(address_or_symbol):
+        address = address_or_symbol
+    else:
         user = User.get_by_telegram_id(user_id)
-        address = [coin.address for coin in user.coins if coin.symbol == args[1]][0]
-        if not address:
+        token = next((coin for coin in user.coins if coin.symbol.lower() == address_or_symbol.lower()), None)
+        if not token:
             bot.send_message(
                 message.chat.id,
-                "Please use a valid wallet address or tracked token(Use the symbol of the token)"
+                "Please provide a valid wallet address or a tracked token symbol."
             )
-            return 
-        
-    amount_str: str = args[2]
+            return
+        address = token.address
+
+    # Parse amount
     if amount_str.lower().endswith("sol") and len(amount_str) > 3:
         try:
-            amount = float(amount_str.lower().replace("sol", ""))
+            amount = float(amount_str[:-3])
+            usdc_amount = convert_sol_to_usdc(amount)
         except ValueError:
             bot.send_message(
                 message.chat.id,
-                "Please enter in a numerical value for the amount of tokens"
+                "Invalid SOL amount. Please enter a numeric value like `0.5SOL`."
             )
-            return 
-        usdc_amount = convert_sol_to_usdc(amount)
-        
+            return
+
     elif amount_str.lower().endswith("usdc") and len(amount_str) > 4:
         try:
-            amount = float(amount_str.lower().replace("usdc", ""))
+            usdc_amount = float(amount_str[:-4])
         except ValueError:
             bot.send_message(
                 message.chat.id,
-                "Please enter in a numerical value for the amount of tokens"
+                "Invalid USDC amount. Please enter a numeric value like `10USDC`."
             )
-            return 
-        usdc_amount = amount
-        
-    if usdc_amount is None:
-        bot.send_message(
-            message.chat.id,
-            "Unexpected error parsing amount. Please check your input."
-        )
-        return
+            return
 
     else:
         bot.send_message(
             message.chat.id,
-            f"Please specify the amount in either `SOL` or `usdc`.\nExample: `/buy {address} {amount_str}SOL or /buy {address} {amount_str}USDC`",
-            parse_mode="Markdown"
+            "Please specify the amount with `SOL` or `USDC` suffix (e.g. `1.2SOL` or `15USDC`)."
         )
         return
+
+    # Proceed to buy
     outcome = Trading.buy_coin(telegram_id=user_id, address=address, usdc_amount=usdc_amount)
     if outcome[0]:
-        bot.send_message(
-            message.chat.id,
-            outcome[0]
-        )
+        bot.send_message(message.chat.id, outcome[0])
     else:
-        bot.send_message(
-            message.chat.id,
-            outcome[1]
-        )
+        bot.send_message(message.chat.id, outcome[1])
         return
-    
-    user = User.get_by_telegram_id(user_id)
+
     # Show updated balance
+    user = User.get_by_telegram_id(user_id)
     bot.send_message(
-            message.chat.id,
-            f"Your balances:\n"
-            f"SOL: {user.sol_balance:.4f}\n"
-            f"usdc: {user.usdc_balance:.2f}"
-        )
-    
+        message.chat.id,
+        f"Your balances:\n"
+        f"SOL: {user.sol_balance:.4f}\n"
+        f"USDC: {user.usdc_balance:.2f}"
+    )
 
 @bot.message_handler(commands=['sell'])
 def sell_coin(message):
