@@ -117,6 +117,7 @@ jobs:
             CURRENT_USER=$(whoami)
             SERVICE_FILE_PATH="/etc/systemd/system/solana-trader-bot.service"
             # Use sudo tee to write the service file directly to the system location
+            # The heredoc content starts on the next line
             sudo tee "$SERVICE_FILE_PATH" > /dev/null << SERVICEFILE
 [Unit]
 Description=Solana Trader Telegram Bot
@@ -136,12 +137,8 @@ Environment="PYTHONUNBUFFERED=1" # Ensure Python output is not buffered
 
 [Install]
 WantedBy=multi-user.target
-SERVICEFILE
+SERVICEFILE # <- This delimiter MUST be at the beginning of the line (no leading spaces)
             echo "Systemd service file created at ${SERVICE_FILE_PATH}."
-
-            # Move the service file to the systemd directory (requires sudo) - No longer needed, written directly
-            # echo "Moving service file and managing service..."
-            # sudo mv ~/solana-trader-bot.service /etc/systemd/system/
 
             # Reload systemd to recognize the new/changed service file
             echo "Reloading systemd daemon..."
