@@ -43,67 +43,65 @@ jobs:
         run: |
           scp bot-deployment.tar.gz ${{ secrets.LINODE_USER }}@${{ secrets.LINODE_HOST }}:~/
           ssh ${{ secrets.LINODE_USER }}@${{ secrets.LINODE_HOST }} << EOF
-            # Create app directory if it doesn't exist
-            mkdir -p ~/solana-trader-bot
-            
-            # Clean existing files and extract new deployment
-            rm -rf ~/solana-trader-bot/*
-            tar -xzf ~/bot-deployment.tar.gz -C ~/solana-trader-bot
-            rm ~/bot-deployment.tar.gz
-            # Set up virtual environment
-            if [ ! -d ~/solana-trader-bot/venv ]; then
-              sudo apt-get update
-              sudo apt-get install -y python3-venv python3-full
-              python3 -m venv ~/solana-trader-bot/venv
-            fi
-            
-            # Install dependencies in virtual environment
-            ~/solana-trader-bot/venv/bin/pip install --upgrade pip
-            ~/solana-trader-bot/venv/bin/pip install -r ~/solana-trader-bot/requirements.txt
-            
-            
-            # Create .env file if it doesn't exist
-            if [ ! -f ~/solana-trader-bot/.env ]; then
-              echo "Creating .env file..."
-              cat > ~/solana-trader-bot/.env << EOL
-              TELEGRAM_API_KEY=${{ secrets.TELEGRAM_API_KEY }}
-              MONGODB_URI=${{ secrets.MONGODB_URI }}
-              EOL
-            else
-              # Update existing .env file with new values
-              echo "Updating .env with new values..."
-              sed -i 's/^TELEGRAM_API_KEY=.*/TELEGRAM_API_KEY=${{ secrets.TELEGRAM_API_KEY }}/g' ~/solana-trader-bot/.env
-              sed -i 's/^MONGODB_URI=.*/MONGODB_URI=${{ secrets.MONGODB_URI }}/g' ~/solana-trader-bot/.env
-            fi
-            
-            echo "Creating systemd service file..."
-            # Create systemd service file
-            cat > ~/solana-trader-bot.service << EOL
-            [Unit]
-            Description=Solana Trader Telegram Bot
-            After=network.target
-            
-            [Service]
-            Type=simple
-            User=${{ secrets.LINODE_USER }}
-            WorkingDirectory=/home/${{ secrets.LINODE_USER }}/solana-trader-bot
-            ExecStart=/home/${{ secrets.LINODE_USER }}/.local/bin/python /home/${{ secrets.LINODE_USER }}/solana-trader-bot/bot.py
-            Restart=on-failure
-            RestartSec=10
-            StandardOutput=journal
-            StandardError=journal
-            Environment="PYTHONUNBUFFERED=1"
-            
-            [Install]
-            WantedBy=multi-user.target
-            EOL
-            
-            # Move service file to systemd directory and set proper permissions
-            sudo mv ~/solana-trader-bot.service /etc/systemd/system/
-            sudo systemctl daemon-reload
-            sudo systemctl enable solana-trader-bot
-            sudo systemctl restart solana-trader-bot
-            
-            # Check service status
-            sudo systemctl status solana-trader-bot
-          EOF
+# Create app directory if it doesn't exist
+mkdir -p ~/solana-trader-bot
+
+# Clean existing files and extract new deployment
+rm -rf ~/solana-trader-bot/*
+tar -xzf ~/bot-deployment.tar.gz -C ~/solana-trader-bot
+rm ~/bot-deployment.tar.gz
+
+# Set up virtual environment
+if [ ! -d ~/solana-trader-bot/venv ]; then
+  sudo apt-get update
+  sudo apt-get install -y python3-venv python3-full
+  python3 -m venv ~/solana-trader-bot/venv
+fi
+
+# Install dependencies in virtual environment
+~/solana-trader-bot/venv/bin/pip install --upgrade pip
+~/solana-trader-bot/venv/bin/pip install -r ~/solana-trader-bot/requirements.txt
+
+# Create .env file if it doesn't exist
+if [ ! -f ~/solana-trader-bot/.env ]; then
+  echo "Creating .env file..."
+  cat > ~/solana-trader-bot/.env << EOL
+TELEGRAM_API_KEY=${{ secrets.TELEGRAM_API_KEY }}
+MONGODB_URI=${{ secrets.MONGODB_URI }}
+EOL
+else
+  echo "Updating .env with new values..."
+  sed -i 's/^TELEGRAM_API_KEY=.*/TELEGRAM_API_KEY=${{ secrets.TELEGRAM_API_KEY }}/g' ~/solana-trader-bot/.env
+  sed -i 's/^MONGODB_URI=.*/MONGODB_URI=${{ secrets.MONGODB_URI }}/g' ~/solana-trader-bot/.env
+fi
+
+echo "Creating systemd service file..."
+cat > ~/solana-trader-bot.service << EOL
+[Unit]
+Description=Solana Trader Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=${{ secrets.LINODE_USER }}
+WorkingDirectory=/home/${{ secrets.LINODE_USER }}/solana-trader-bot
+ExecStart=/home/${{ secrets.LINODE_USER }}/.local/bin/python /home/${{ secrets.LINODE_USER }}/solana-trader-bot/bot.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+Environment="PYTHONUNBUFFERED=1"
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+# Move service file to systemd directory and set proper permissions
+sudo mv ~/solana-trader-bot.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable solana-trader-bot
+sudo systemctl restart solana-trader-bot
+
+# Check service status
+sudo systemctl status solana-trader-bot
+EOF
