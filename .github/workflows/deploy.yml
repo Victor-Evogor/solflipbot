@@ -50,10 +50,19 @@ jobs:
             rm -rf ~/solana-trader-bot/*
             tar -xzf ~/bot-deployment.tar.gz -C ~/solana-trader-bot
             rm ~/bot-deployment.tar.gz
+
+            # Set up virtual environment
+            if [ ! -d ~/solana-trader-bot/venv ]; then
+              sudo apt-get update
+              sudo apt-get install -y python3-venv python3-full
+              python3 -m venv ~/solana-trader-bot/venv
+            fi
             
-            # Install dependencies on server
-            cd ~/solana-trader-bot
-            pip3 install --user -r requirements.txt
+            # Install dependencies in virtual environment
+            ~/solana-trader-bot/venv/bin/pip install --upgrade pip
+            ~/solana-trader-bot/venv/bin/pip install -r ~/solana-trader-bot/requirements.txt
+
+            
             
             # Create .env file if it doesn't exist
             if [ ! -f ~/solana-trader-bot/.env ]; then
