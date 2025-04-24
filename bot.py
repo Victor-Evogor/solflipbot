@@ -175,8 +175,15 @@ def buy_coin(message):
             outcome[1]
         )
         return
-
-        
+    
+    user = User.get_by_telegram_id(user_id)
+    # Show updated balance
+    bot.send_message(
+            message.chat.id,
+            f"Your balances:\n"
+            f"SOL: {user.sol_balance:.4f}\n"
+            f"usdc: {user.usdc_balance:.2f}"
+        )
     
 
 @bot.message_handler(commands=['sell'])
@@ -220,7 +227,7 @@ def sell_coin(message):
     if outcome[0]:
         bot.send_message(
             message.chat.id,
-            outcome[0]
+            outcome[1]
         )
     else:
         bot.send_message(
@@ -228,6 +235,16 @@ def sell_coin(message):
             outcome[1]
         )
         return
+    
+    user = User.get_by_telegram_id(user_id)
+    # Show updated balance
+    bot.send_message(
+            message.chat.id,
+            f"Your balance:\n"
+            f"SOL: {user.sol_balance:.4f}\n"
+            f"usdc: {user.usdc_balance:.2f}"
+        )
+    
 
 @bot.message_handler(commands=['airdrop'])
 def airdrop(message):
@@ -323,7 +340,7 @@ def unlock_usdc(message):
     
     
     # Process lock (convert SOL to usdc)
-    success, message_text = Trading.unlock_usdc(telegram_id=user_id, sol_amount=usdc_amount)
+    success, message_text = Trading.unlock_usdc(telegram_id=user_id, usdc_amount=usdc_amount)[1]
     if not success:
         bot.send_message(message.chat.id, message_text)
         return
@@ -344,17 +361,52 @@ def show_balance(message):
     user_id = message.from_user.id
     User.update_last_active(telegram_id=user_id)
     
-    response = "in progress"
+    user = User.get_by_telegram_id(telegram_id=user_id)
+    sol_balance = user.sol_balance
+    usdc_balance = user.usdc_balance
+    coins_balance = [{"symbol": coin.symbol, "amount": coin.amount} for coin in user.coins]
+
+    response_lines = [
+        "*💼 Wallet Balances:*",
+        f"- 🪙 *SOL:* {sol_balance:.4f}",
+        f"- 💵 *USDC:* {usdc_balance:.2f}"
+    ]
+
+    if coins_balance:
+        response_lines.append("\n*📦 Other Tokens:*")
+        for coin in coins_balance:
+            response_lines.append(f"- {coin['symbol']}: {coin['amount']:.4f}")
+
+    response = "\n".join(response_lines)
     
     bot.send_message(message.chat.id, response, parse_mode="Markdown")
+
 
 @bot.message_handler(commands=['pnl'])
 def show_pnl(message):
     """Show user's profit and loss statistics"""
     user_id = message.from_user.id
     User.update_last_active(telegram_id=user_id)
+    user = User.get_by_telegram_id(telegram_id=user_id)
+    total_pnl = user.pnl
     
-    response = "In progress"
+    args = message.text.split()[1:]
+    
+    if len(args) == 0:
+        response = f"Your current PnL is {total_pnl}%"
+    elif args[0].lower() == "all":
+        response = f"*Total PNL*: {total_pnl}%\n\n"
+        response += "*Other PnL*: \n"
+        for coin in user.coins:
+            response += f"*{coin.symbol}*: {coin.pnl}%\n"
+        
+    else:
+        response = f"*Total PNL*: {total_pnl}%\n\n"
+        response += "*Other PnL*: \n"
+        for symbol in args:
+            selected_coins = [coin for coin in user.coins if coin.symbol == symbol]
+        for coin in selected_coins:
+            response += f"*{coin.symbol}*: {coin.pnl}%\n"
     
     bot.send_message(message.chat.id, response, parse_mode="Markdown")
 

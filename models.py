@@ -194,7 +194,7 @@ class Trading:
             user.coins.append(Coin(address=address, symbol=symbol, txns=[Txn(type="BUY", amount=amount, priceUsd=token_price)]))
         user.sol_balance -= sol_amount
         user.save()
-        return f"Bought {amount}{symbol} for {usdc_amount}USDC", None
+        return f"Bought {amount}{symbol} for {usdc_amount}USDC 💸", None
         
     
     @staticmethod
@@ -210,7 +210,7 @@ class Trading:
             coin.txns.append(Txn(type="SELL", amount=coin.amount * (percentage / 100), priceUsd=token_price))
             user.sol_balance -= convert_usdc_to_sol(selling_price)
             user.save()
-            return True, f"Sold {percentage}% of {coin.symbol} at {token_price:.4f} usdc"
+            return True, f"Sold {percentage}% of {coin.symbol} at {token_price:.4f}USDC 💸"
         else:
             raise f"No coin found for address {address}"
     
@@ -227,7 +227,7 @@ class Trading:
         user.usdc_balance += usdc_amount
         user.save()
         
-        return True, f"Converted {sol_amount:.4f} SOL to {usdc_amount:.2f} usdc"
+        return True, f"Converted {sol_amount:.4f}SOL to {usdc_amount:.2f}USDC 🔄"
     
     @staticmethod
     def unlock_usdc(telegram_id, usdc_amount):
@@ -241,7 +241,7 @@ class Trading:
         user.sol_balance += sol_amount
         user.save()
         
-        return True, f"Converted {usdc_amount:.2f} usdc to {sol_amount:.4f} SOL"
+        return True, f"Converted {usdc_amount:.2f}USDC to {sol_amount:.4f}SOL 🔄"
     
     @staticmethod
     def airdrop_usdc(telegram_id, usdc_amount=50.0):
@@ -250,7 +250,7 @@ class Trading:
         user.usdc_balance += usdc_amount
         user.save()
         
-        return True, f"Airdropped {usdc_amount:.2f} usdc to your wallet!"
+        return True, f"Airdropped {usdc_amount:.2f}USDC to your wallet!💸"
     
     @staticmethod
     def get_portfolio_value(telegram_id) -> Tuple[float, float]:

@@ -1,5 +1,0 @@
-from utils.get_price_of_coin_in_usdt import get_price_and_symbol
-from utils.is_mint_address import is_mint_address
-
-print(get_price_and_symbol("38AzpaUxVEGhFjXxJx86xsb5xxWW1c1DKvqHhPXBpump"))
-print(is_mint_address("38AzpaUxVEGhFjXxJx86xsb5xxWW1c1DKvqHhPXBpump"))
