@@ -84,8 +84,8 @@ jobs:
           [Service]
           Type=simple
           User=${{ secrets.LINODE_USER }}
-          WorkingDirectory=/home/${{ secrets.LINODE_USER }}/solana-trader-bot
-          ExecStart=/home/${{ secrets.LINODE_USER }}/.local/bin/python /home/${{ secrets.LINODE_USER }}/solana-trader-bot/bot.py
+          WorkingDirectory=/${{ secrets.LINODE_USER }}/solana-trader-bot
+          ExecStart=/${{ secrets.LINODE_USER }}/solana-trader-bot/venv/bin/python3 /${{ secrets.LINODE_USER }}/solana-trader-bot/bot.py
           Restart=on-failure
           RestartSec=10
           StandardOutput=journal
