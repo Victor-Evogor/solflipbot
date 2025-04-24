@@ -340,7 +340,7 @@ def unlock_usdc(message):
     
     
     # Process lock (convert SOL to usdc)
-    success, message_text = Trading.unlock_usdc(telegram_id=user_id, usdc_amount=usdc_amount)[1]
+    success, message_text = Trading.unlock_usdc(telegram_id=user_id, usdc_amount=usdc_amount)
     if not success:
         bot.send_message(message.chat.id, message_text)
         return
