@@ -65,7 +65,7 @@ jobs:
             # Create .env file if it doesn't exist
             if [ ! -f ~/solana-trader-bot/.env ]; then
               echo "Creating .env file..."
-              cat > ~/solana-trader-bot/.env << 'EOL'
+              cat > ~/solana-trader-bot/.env << EOL
               TELEGRAM_API_KEY=${{ secrets.TELEGRAM_API_KEY }}
               MONGODB_URI=${{ secrets.MONGODB_URI }}
               EOL
@@ -78,7 +78,7 @@ jobs:
             
             echo "Creating systemd service file..."
             # Create systemd service file
-            cat > ~/solana-trader-bot.service << 'EOL'
+            cat > ~/solana-trader-bot.service << EOL
             [Unit]
             Description=Solana Trader Telegram Bot
             After=network.target
