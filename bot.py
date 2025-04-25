@@ -60,6 +60,11 @@ def start_command(message):
    • /list - Browse available tokens 📋
    • /balance - Check your holdings 💼
 
+   How to get started
+   • Find a coin you would like to buy on dexscreener (https://dexscreener.com/)
+   • Copy the token address
+   • Buy the token using the /buy command
+
 💎 Join our community: https://t.me/solanasimtraders
 
 Type /help for all commands and tips!"""
