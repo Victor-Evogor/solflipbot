@@ -65,7 +65,8 @@ def start_command(message):
    • Copy the token address
    • Buy the token using the /buy command
 
-💎 Join our community: https://t.me/solanasimtraders
+💎 Follow our channel: https://t.me/solanasimtraders
+   Join our community: https://t.me/+Q8HSQTE6VX5mN2Zk
 
 Type /help for all commands and tips!"""
     )
