@@ -7,6 +7,5 @@ airdrop - Claim a free airdrop of demo USDT to your wallet
 lock - Convert a specified amount of demo SOL into demo USDT for stability
 unlock - Convert a specified amount of demo USDT back into demo SOL for trading
 balance - Check your current wallet balances
-portfolio - View your complete trading portfolio and statistics
 pnl - See your profit/loss statistics across all holdings
 help - Get detailed instructions on how to use the bot

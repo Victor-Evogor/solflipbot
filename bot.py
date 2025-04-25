@@ -487,9 +487,8 @@ def help_command(message):
     "  Example: `/unlock 25`\n\n"
     
     "📈 *PORTFOLIO COMMANDS* 📈\n"
-    "/balance - View your wallet balances\n\n"
+    "/balance - View your wallet balances and holdings\n\n"
     
-    "/portfolio - See your complete holdings\n\n"
     
     "/pnl - Check your profit/loss metrics\n"
     "  Options: `/pnl all` or `/pnl [SYMBOL]`\n\n"
