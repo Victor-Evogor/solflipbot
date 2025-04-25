@@ -220,17 +220,17 @@ def buy_coin(message):
     )
     
     # After successful purchase, add this:
-    markup = telebot.types.InlineKeyboardMarkup()
-    markup.add(
-        telebot.types.InlineKeyboardButton("View Portfolio", callback_data="view_portfolio"),
-        telebot.types.InlineKeyboardButton("Buy More", callback_data=f"buy_more_{symbol}")
-    )
+    # markup = telebot.types.InlineKeyboardMarkup()
+    # markup.add(
+    #     telebot.types.InlineKeyboardButton("View Portfolio", callback_data="view_portfolio"),
+    #     telebot.types.InlineKeyboardButton("Buy More", callback_data=f"buy_more_{symbol}")
+    # )
     
-    bot.send_message(
-        message.chat.id,
-        f"Want to see your updated portfolio or buy more {symbol}?",
-        reply_markup=markup
-    )
+    # bot.send_message(
+    #     message.chat.id,
+    #     f"Want to see your updated portfolio or buy more {symbol}?",
+    #     reply_markup=markup
+    # )
 
 @bot.message_handler(commands=['sell'])
 def sell_coin(message):
