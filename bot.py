@@ -58,12 +58,11 @@ def start_command(message):
    • /buy - Grab some meme coins 🛒
    • /sell - Take profits (or losses) 📈
    • /list - Browse available tokens 📋
-   • /portfolio - Check your holdings 💼
+   • /balance - Check your holdings 💼
 
 💎 Join our community: https://t.me/solanasimtraders
 
 Type /help for all commands and tips!"""
-        
     )
     
     bot.send_message(message.chat.id, welcome_text)
@@ -422,17 +421,7 @@ def show_balance(message):
     
     bot.send_message(message.chat.id, response, parse_mode="Markdown")
     
-    markup = telebot.types.InlineKeyboardMarkup()
-    markup.add(
-        telebot.types.InlineKeyboardButton("Buy Tokens", callback_data="show_buy_options"),
-        telebot.types.InlineKeyboardButton("Lock SOL", callback_data="lock_sol")
-    )
     
-    bot.send_message(
-        message.chat.id,
-        "What would you like to do next?",
-        reply_markup=markup
-    )
 
 
 @bot.message_handler(commands=['pnl'])
