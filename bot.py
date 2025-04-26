@@ -42,8 +42,10 @@ def start_command(message):
     last_name = message.from_user.last_name
     
     # Register user
-    user = User(telegram_id=user_id, username=username, first_name=first_name, last_name=last_name, sol_balance=5, usdc_balance=100)
-    user.save()
+    user = User.get_by_telegram_id(user_id)
+    if not user:
+        user = User(telegram_id=user_id, username=username, first_name=first_name, last_name=last_name, sol_balance=5, usdc_balance=100)
+        user.save()
     
     welcome_text = (
         f"""🚀 Welcome to Solana Meme Trader, {first_name}! 🚀
